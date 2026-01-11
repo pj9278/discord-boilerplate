@@ -7,16 +7,38 @@ import { logger } from '../utils/logger.js';
 const NEWS_CHANNEL_ID = process.env.AI_NEWS_CHANNEL_ID ?? '';
 const NEWS_SCHEDULE = process.env.AI_NEWS_SCHEDULE ?? '0 9 * * 5'; // Default: Friday 9am
 
-// Non-technical, accessible AI news feeds
+// Source configuration with colors and emojis
 const RSS_FEEDS = [
   {
-    name: 'The Verge AI',
+    name: 'The Verge',
     url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
+    emoji: ':triangular_ruler:',
+    color: 0xfa4b2a,
   },
-  { name: 'Wired AI', url: 'https://www.wired.com/feed/tag/ai/latest/rss' },
-  { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
-  { name: 'THE DECODER', url: 'https://the-decoder.com/feed/' },
-  { name: 'One Useful Thing', url: 'https://oneusefulthing.substack.com/feed' },
+  {
+    name: 'Wired',
+    url: 'https://www.wired.com/feed/tag/ai/latest/rss',
+    emoji: ':electric_plug:',
+    color: 0x000000,
+  },
+  {
+    name: 'TechCrunch',
+    url: 'https://techcrunch.com/category/artificial-intelligence/feed/',
+    emoji: ':green_circle:',
+    color: 0x0a9e01,
+  },
+  {
+    name: 'THE DECODER',
+    url: 'https://the-decoder.com/feed/',
+    emoji: ':robot:',
+    color: 0x6366f1,
+  },
+  {
+    name: 'One Useful Thing',
+    url: 'https://oneusefulthing.substack.com/feed',
+    emoji: ':bulb:',
+    color: 0xf59e0b,
+  },
 ];
 
 interface NewsItem {
@@ -26,26 +48,46 @@ interface NewsItem {
   pubDate: Date;
 }
 
+interface FeedConfig {
+  name: string;
+  url: string;
+  emoji: string;
+  color: number;
+}
+
 const parser = new Parser();
 
-async function fetchNewsFromFeed(
-  feedName: string,
-  feedUrl: string,
-  since: Date
-): Promise<NewsItem[]> {
+// Decode HTML entities like &#8217; → '
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8211;/g, '–')
+    .replace(/&#8212;/g, '—')
+    .replace(/&#038;/g, '&')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+async function fetchNewsFromFeed(feed: FeedConfig, since: Date): Promise<NewsItem[]> {
   try {
-    const feed = await parser.parseURL(feedUrl);
+    const rss = await parser.parseURL(feed.url);
     const items: NewsItem[] = [];
 
-    for (const item of feed.items) {
+    for (const item of rss.items) {
       if (!item.title || !item.link || !item.pubDate) continue;
 
       const pubDate = new Date(item.pubDate);
       if (pubDate >= since) {
         items.push({
-          title: item.title,
+          title: decodeHtmlEntities(item.title),
           link: item.link,
-          source: feedName,
+          source: feed.name,
           pubDate,
         });
       }
@@ -53,62 +95,92 @@ async function fetchNewsFromFeed(
 
     return items;
   } catch (error) {
-    logger.error(`[AI News] Failed to fetch ${feedName}:`, error);
+    logger.error(`[AI News] Failed to fetch ${feed.name}:`, error);
     return [];
   }
 }
 
-async function fetchAllNews(since: Date): Promise<NewsItem[]> {
-  const allItems: NewsItem[] = [];
+async function fetchAllNews(since: Date): Promise<Map<string, NewsItem[]>> {
+  const bySource = new Map<string, NewsItem[]>();
 
   const results = await Promise.allSettled(
-    RSS_FEEDS.map((feed) => fetchNewsFromFeed(feed.name, feed.url, since))
+    RSS_FEEDS.map(async (feed) => {
+      const items = await fetchNewsFromFeed(feed, since);
+      return { source: feed.name, items };
+    })
   );
 
   for (const result of results) {
-    if (result.status === 'fulfilled') {
-      allItems.push(...result.value);
+    if (result.status === 'fulfilled' && result.value.items.length > 0) {
+      bySource.set(result.value.source, result.value.items);
     }
   }
 
-  // Sort by date, newest first
-  allItems.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
-
-  return allItems;
+  return bySource;
 }
 
-function formatNewsEmbed(items: NewsItem[]): EmbedBuilder[] {
-  const embeds: EmbedBuilder[] = [];
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
-  // Group by source
-  const bySource = new Map<string, NewsItem[]>();
-  for (const item of items) {
-    const existing = bySource.get(item.source) ?? [];
-    existing.push(item);
-    bySource.set(item.source, existing);
+function createNewsEmbeds(newsBySource: Map<string, NewsItem[]>): EmbedBuilder[] {
+  const embeds: EmbedBuilder[] = [];
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // Count total articles
+  let totalArticles = 0;
+  for (const items of newsBySource.values()) {
+    totalArticles += items.length;
   }
 
-  // Create main embed
-  const mainEmbed = new EmbedBuilder()
+  // Header embed
+  const headerEmbed = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle('Weekly AI News Roundup')
-    .setDescription(`Here's what happened in AI this week (${items.length} articles)`)
+    .setTitle(':newspaper: Weekly AI News Roundup')
+    .setDescription(
+      `**${formatDate(weekAgo)} – ${formatDate(now)}**\n\n` +
+        `Here's your curated digest of the week's top AI stories from ${newsBySource.size} sources.\n\n` +
+        `:bar_chart: **${totalArticles} articles** collected this week`
+    )
     .setTimestamp();
 
-  embeds.push(mainEmbed);
+  embeds.push(headerEmbed);
 
-  // Create embed for each source (limit to avoid hitting Discord limits)
-  for (const [source, sourceItems] of bySource) {
-    const limitedItems = sourceItems.slice(0, 5); // Max 5 per source
-    const links = limitedItems.map((item) => `• [${item.title}](${item.link})`).join('\n');
+  // Source embeds
+  for (const feed of RSS_FEEDS) {
+    const items = newsBySource.get(feed.name);
+    if (!items || items.length === 0) continue;
+
+    // Limit to 4 articles per source for cleaner look
+    const limitedItems = items.slice(0, 4);
+
+    const links = limitedItems
+      .map((item) => `${feed.emoji} [${item.title}](${item.link})`)
+      .join('\n\n');
 
     const sourceEmbed = new EmbedBuilder()
-      .setColor(0x5865f2)
-      .setTitle(source)
-      .setDescription(links.slice(0, 4096)); // Discord limit
+      .setColor(feed.color)
+      .setTitle(`${feed.emoji} ${feed.name}`)
+      .setDescription(links.slice(0, 4096));
+
+    // Add count if there are more articles
+    if (items.length > 4) {
+      sourceEmbed.setFooter({ text: `+${items.length - 4} more articles` });
+    }
 
     embeds.push(sourceEmbed);
   }
+
+  // Footer embed
+  const footerEmbed = new EmbedBuilder()
+    .setColor(0x2f3136)
+    .setDescription(
+      ':bell: *News posted every Friday at 9am*\n' +
+        ':link: Click any headline to read the full article'
+    );
+
+  embeds.push(footerEmbed);
 
   return embeds;
 }
@@ -131,15 +203,15 @@ async function postWeeklyNews(client: Client): Promise<void> {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  const news = await fetchAllNews(oneWeekAgo);
+  const newsBySource = await fetchAllNews(oneWeekAgo);
 
-  if (news.length === 0) {
+  if (newsBySource.size === 0) {
     logger.info('[AI News] No news found for the past week');
-    await channel.send('No AI news found for the past week.');
+    await channel.send(':newspaper: No AI news found for the past week.');
     return;
   }
 
-  const embeds = formatNewsEmbed(news);
+  const embeds = createNewsEmbeds(newsBySource);
 
   // Discord allows max 10 embeds per message
   const embedChunks: EmbedBuilder[][] = [];
@@ -151,7 +223,13 @@ async function postWeeklyNews(client: Client): Promise<void> {
     await channel.send({ embeds: chunk });
   }
 
-  logger.info(`[AI News] Posted ${news.length} articles to channel`);
+  // Count total articles
+  let total = 0;
+  for (const items of newsBySource.values()) {
+    total += items.length;
+  }
+
+  logger.info(`[AI News] Posted ${total} articles from ${newsBySource.size} sources`);
 }
 
 const feature: Feature = {
