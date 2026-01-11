@@ -1,12 +1,7 @@
 import type { Feature } from '../types/index.js';
+import aiResponder from './aiResponder.js';
 
-// Import your features here
-// import exampleFeature from './example.js';
-
-const features: Feature[] = [
-  // Add features here
-  // exampleFeature,
-];
+const features: Feature[] = [aiResponder];
 
 export function loadFeatures(): Feature[] {
   return features;
