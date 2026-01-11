@@ -7,38 +7,13 @@ import { logger } from '../utils/logger.js';
 const NEWS_CHANNEL_ID = process.env.AI_NEWS_CHANNEL_ID ?? '';
 const NEWS_SCHEDULE = process.env.AI_NEWS_SCHEDULE ?? '0 9 * * 5'; // Default: Friday 9am
 
-// Source configuration with colors and emojis
+// Source configuration
 const RSS_FEEDS = [
-  {
-    name: 'The Verge',
-    url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
-    emoji: ':triangular_ruler:',
-    color: 0xfa4b2a,
-  },
-  {
-    name: 'Wired',
-    url: 'https://www.wired.com/feed/tag/ai/latest/rss',
-    emoji: ':electric_plug:',
-    color: 0x000000,
-  },
-  {
-    name: 'TechCrunch',
-    url: 'https://techcrunch.com/category/artificial-intelligence/feed/',
-    emoji: ':green_circle:',
-    color: 0x0a9e01,
-  },
-  {
-    name: 'THE DECODER',
-    url: 'https://the-decoder.com/feed/',
-    emoji: ':robot:',
-    color: 0x6366f1,
-  },
-  {
-    name: 'One Useful Thing',
-    url: 'https://oneusefulthing.substack.com/feed',
-    emoji: ':bulb:',
-    color: 0xf59e0b,
-  },
+  { name: 'The Verge', url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml' },
+  { name: 'Wired', url: 'https://www.wired.com/feed/tag/ai/latest/rss' },
+  { name: 'TechCrunch', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
+  { name: 'THE DECODER', url: 'https://the-decoder.com/feed/' },
+  { name: 'One Useful Thing', url: 'https://oneusefulthing.substack.com/feed' },
 ];
 
 interface NewsItem {
@@ -51,8 +26,6 @@ interface NewsItem {
 interface FeedConfig {
   name: string;
   url: string;
-  emoji: string;
-  color: number;
 }
 
 const parser = new Parser();
@@ -137,50 +110,32 @@ function createNewsEmbeds(newsBySource: Map<string, NewsItem[]>): EmbedBuilder[]
   // Header embed
   const headerEmbed = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle(':newspaper: Weekly AI News Roundup')
+    .setTitle('Weekly AI News Roundup')
     .setDescription(
-      `**${formatDate(weekAgo)} – ${formatDate(now)}**\n\n` +
-        `Here's your curated digest of the week's top AI stories from ${newsBySource.size} sources.\n\n` +
-        `:bar_chart: **${totalArticles} articles** collected this week`
+      `**${formatDate(weekAgo)} – ${formatDate(now)}**\n` +
+        `${totalArticles} articles from ${newsBySource.size} sources`
     )
     .setTimestamp();
 
   embeds.push(headerEmbed);
 
-  // Source embeds
+  // Source embeds - compact format
   for (const feed of RSS_FEEDS) {
     const items = newsBySource.get(feed.name);
     if (!items || items.length === 0) continue;
 
-    // Limit to 4 articles per source for cleaner look
-    const limitedItems = items.slice(0, 4);
+    // Limit to 5 articles per source
+    const limitedItems = items.slice(0, 5);
 
-    const links = limitedItems
-      .map((item) => `${feed.emoji} [${item.title}](${item.link})`)
-      .join('\n\n');
+    const links = limitedItems.map((item) => `• ${item.title} [[Link]](${item.link})`).join('\n');
 
     const sourceEmbed = new EmbedBuilder()
-      .setColor(feed.color)
-      .setTitle(`${feed.emoji} ${feed.name}`)
+      .setColor(0x5865f2)
+      .setTitle(feed.name)
       .setDescription(links.slice(0, 4096));
-
-    // Add count if there are more articles
-    if (items.length > 4) {
-      sourceEmbed.setFooter({ text: `+${items.length - 4} more articles` });
-    }
 
     embeds.push(sourceEmbed);
   }
-
-  // Footer embed
-  const footerEmbed = new EmbedBuilder()
-    .setColor(0x2f3136)
-    .setDescription(
-      ':bell: *News posted every Friday at 9am*\n' +
-        ':link: Click any headline to read the full article'
-    );
-
-  embeds.push(footerEmbed);
 
   return embeds;
 }
