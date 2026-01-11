@@ -1,13 +1,15 @@
 # kens-discord-bot
 
-A Discord.js v14 bot boilerplate in TypeScript with automatic command/event handlers, ready for Railway deployment.
+A Discord.js v14 bot boilerplate in TypeScript with automatic command/event handlers, AI integration via Groq, ready for Railway deployment.
 
 ## Project Structure
 
 ```
 src/
 ├── commands/           # Slash commands organized by category
-│   └── utility/        # Utility commands (ping, info)
+│   ├── ai/             # AI-powered commands (chat, ask, summarize)
+│   ├── fun/            # Entertainment commands (8ball, avatar)
+│   └── utility/        # Utility commands (ping, info, coinflip, roll)
 ├── events/             # Discord.js event handlers
 ├── features/           # Plugin-style features (auto-loaded)
 ├── handlers/           # Dynamic loaders for commands and events
