@@ -37,3 +37,24 @@ export interface Feature {
   onMessage?: (message: Message) => Promise<void>;
   onReaction?: (reaction: MessageReaction, user: User) => Promise<void>;
 }
+
+// Moderation types
+export type ModActionType = 'ban' | 'kick' | 'timeout' | 'warn' | 'unban' | 'untimeout';
+
+export interface ModCase {
+  id: number;
+  guildId: string;
+  targetId: string;
+  targetTag: string;
+  moderatorId: string;
+  moderatorTag: string;
+  action: ModActionType;
+  reason: string;
+  duration?: number; // For timeouts, in seconds
+  timestamp: string;
+}
+
+export interface ModerationData {
+  nextCaseId: Record<string, number>; // Per-guild case ID counter
+  cases: ModCase[];
+}
