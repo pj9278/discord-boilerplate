@@ -152,6 +152,50 @@ Use this guide to systematically test all bot features with your team.
 
 ---
 
+## Error Handling Verification
+
+These tests verify the bot handles errors gracefully and logs them properly.
+
+### Check Railway Logs
+```bash
+railway logs --tail
+```
+Keep this running in a terminal while testing.
+
+### Invalid Command Arguments
+- [ ] Run `/timeout @user duration:invalid` (bad duration format)
+- [ ] Verify bot responds with error message (not crash)
+- [ ] Check logs - should show handled error, not stack trace
+
+### Missing Permissions Test
+- [ ] Temporarily remove bot's "Manage Messages" permission
+- [ ] Try `/automod enable` and trigger spam filter
+- [ ] Verify bot logs permission error, doesn't crash
+- [ ] Restore bot permissions
+
+### Invalid Channel/Role IDs
+- [ ] Run `/auditlog enable channel:#deleted-channel` (use invalid ID)
+- [ ] Verify graceful error message
+- [ ] Check logs for handled error
+
+### API Rate Limits (optional)
+- [ ] Rapidly run 10+ commands in sequence
+- [ ] Verify bot queues/handles rate limits
+- [ ] Should not crash or lose functionality
+
+### Verify Error Log Format
+In Railway logs, errors should appear as:
+```
+[ERROR] Description of what failed
+```
+Not as unhandled promise rejections or uncaught exceptions.
+
+### Process Resilience
+- [ ] Bot should stay online after any error above
+- [ ] Run `/ping` after each test to confirm bot is responsive
+
+---
+
 ## Quick Smoke Test (5 minutes)
 
 Run these commands to verify bot is responding:
