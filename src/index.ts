@@ -8,6 +8,16 @@ import type { ExtendedClient, Feature } from './types/index.js';
 
 let features: Feature[] = [];
 
+// Process-level error handlers to prevent silent crashes
+process.on('unhandledRejection', (error) => {
+  logger.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
+  process.exit(1);
+});
+
 async function main(): Promise<void> {
   logger.info('Starting bot...');
 
@@ -15,6 +25,15 @@ async function main(): Promise<void> {
     intents: config.intents,
     partials: config.partials,
   }) as ExtendedClient;
+
+  // Discord client error handlers
+  client.on(Events.Error, (error) => {
+    logger.error('Discord client error:', error);
+  });
+
+  client.on(Events.ShardError, (error) => {
+    logger.error('WebSocket shard error:', error);
+  });
 
   client.commands = new Collection();
 

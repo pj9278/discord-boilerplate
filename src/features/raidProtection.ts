@@ -1,4 +1,4 @@
-import { type Client, type GuildMember, EmbedBuilder, type TextChannel } from 'discord.js';
+import { type Client, type GuildMember, EmbedBuilder, type TextChannel, Events } from 'discord.js';
 import type { Feature } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { config } from '../utils/config.js';
@@ -119,7 +119,7 @@ const feature: Feature = {
       }
     }, 60000);
 
-    client.on('guildMemberAdd', async (member) => {
+    client.on(Events.GuildMemberAdd, async (member) => {
       const raidConfig = getRaidConfig(member.guild.id);
 
       if (!raidConfig.enabled) return;

@@ -1,4 +1,4 @@
-import { type Client, type Message, EmbedBuilder, type TextChannel } from 'discord.js';
+import { type Client, type Message, EmbedBuilder, type TextChannel, Events } from 'discord.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import type { Feature } from '../types/index.js';
 import { logger } from '../utils/logger.js';
@@ -157,7 +157,7 @@ const feature: Feature = {
   async init(client: Client) {
     logger.info('[Leveling] Initializing XP/leveling system');
 
-    client.on('messageCreate', async (message: Message) => {
+    client.on(Events.MessageCreate, async (message: Message) => {
       // Ignore DMs, bots, and commands
       if (!message.guild || message.author.bot || message.content.startsWith('/')) return;
 

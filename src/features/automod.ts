@@ -1,4 +1,10 @@
-import { type Client, type Message, type GuildMember, PermissionFlagsBits } from 'discord.js';
+import {
+  type Client,
+  type Message,
+  type GuildMember,
+  PermissionFlagsBits,
+  Events,
+} from 'discord.js';
 import type { Feature } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { getAutomodConfig } from '../utils/automodConfig.js';
@@ -340,7 +346,7 @@ const feature: Feature = {
     logger.info('[AutoMod] Initializing auto-moderation system');
 
     // Handle messages
-    client.on('messageCreate', async (message) => {
+    client.on(Events.MessageCreate, async (message) => {
       // Ignore DMs, bots, and system messages
       if (!message.guild || message.author.bot || message.system) return;
 
@@ -386,7 +392,7 @@ const feature: Feature = {
     });
 
     // Handle member joins for account age check
-    client.on('guildMemberAdd', async (member) => {
+    client.on(Events.GuildMemberAdd, async (member) => {
       await checkAccountAge(member);
     });
 

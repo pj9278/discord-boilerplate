@@ -15,7 +15,7 @@ export async function chat(message: string): Promise<string> {
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: message },
     ],
-    max_tokens: 1024,
+    max_completion_tokens: 1024,
     temperature: 0.7,
   });
 
@@ -31,7 +31,7 @@ export async function summarize(text: string): Promise<string> {
       { role: 'system', content: 'Summarize concisely in bullet points.' },
       { role: 'user', content: text },
     ],
-    max_tokens: 512,
+    max_completion_tokens: 512,
     temperature: 0.3,
   });
 
@@ -57,7 +57,7 @@ export async function chatWithHistory(userId: string, message: string): Promise<
   const response = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [{ role: 'system', content: 'You are a helpful assistant.' }, ...history.slice(-10)],
-    max_tokens: 1024,
+    max_completion_tokens: 1024,
     temperature: 0.7,
   });
 

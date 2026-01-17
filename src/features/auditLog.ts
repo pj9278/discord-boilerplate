@@ -8,6 +8,7 @@ import {
   type GuildBan,
   AuditLogEvent,
   type Role,
+  Events,
 } from 'discord.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import type { Feature } from '../types/index.js';
@@ -117,7 +118,7 @@ const feature: Feature = {
     logger.info('[Audit Log] Initializing audit logging system');
 
     // Message Edit
-    client.on('messageUpdate', async (oldMessage, newMessage) => {
+    client.on(Events.MessageUpdate, async (oldMessage, newMessage) => {
       if (!oldMessage.guild || oldMessage.author?.bot) return;
       if (oldMessage.content === newMessage.content) return;
 
@@ -158,7 +159,7 @@ const feature: Feature = {
     });
 
     // Message Delete
-    client.on('messageDelete', async (message) => {
+    client.on(Events.MessageDelete, async (message) => {
       if (!message.guild || message.author?.bot) return;
 
       const config = getAuditConfig(message.guild.id);
@@ -196,7 +197,7 @@ const feature: Feature = {
     });
 
     // Member Join
-    client.on('guildMemberAdd', async (member) => {
+    client.on(Events.GuildMemberAdd, async (member) => {
       const config = getAuditConfig(member.guild.id);
       if (!config.enabled || !config.events.memberJoin) return;
 
@@ -220,7 +221,7 @@ const feature: Feature = {
     });
 
     // Member Leave
-    client.on('guildMemberRemove', async (member) => {
+    client.on(Events.GuildMemberRemove, async (member) => {
       const config = getAuditConfig(member.guild.id);
       if (!config.enabled || !config.events.memberLeave) return;
 
@@ -246,7 +247,7 @@ const feature: Feature = {
     });
 
     // Member Ban
-    client.on('guildBanAdd', async (ban: GuildBan) => {
+    client.on(Events.GuildBanAdd, async (ban: GuildBan) => {
       const config = getAuditConfig(ban.guild.id);
       if (!config.enabled || !config.events.memberBan) return;
 
@@ -265,7 +266,7 @@ const feature: Feature = {
     });
 
     // Member Unban
-    client.on('guildBanRemove', async (ban: GuildBan) => {
+    client.on(Events.GuildBanRemove, async (ban: GuildBan) => {
       const config = getAuditConfig(ban.guild.id);
       if (!config.enabled || !config.events.memberUnban) return;
 
@@ -281,7 +282,7 @@ const feature: Feature = {
     });
 
     // Role Create
-    client.on('roleCreate', async (role: Role) => {
+    client.on(Events.GuildRoleCreate, async (role: Role) => {
       const config = getAuditConfig(role.guild.id);
       if (!config.enabled || !config.events.roleCreate) return;
 
@@ -300,7 +301,7 @@ const feature: Feature = {
     });
 
     // Role Delete
-    client.on('roleDelete', async (role: Role) => {
+    client.on(Events.GuildRoleDelete, async (role: Role) => {
       const config = getAuditConfig(role.guild.id);
       if (!config.enabled || !config.events.roleDelete) return;
 
@@ -318,7 +319,7 @@ const feature: Feature = {
     });
 
     // Role Update
-    client.on('roleUpdate', async (oldRole: Role, newRole: Role) => {
+    client.on(Events.GuildRoleUpdate, async (oldRole: Role, newRole: Role) => {
       const config = getAuditConfig(newRole.guild.id);
       if (!config.enabled || !config.events.roleUpdate) return;
 
@@ -355,7 +356,7 @@ const feature: Feature = {
 
     // Member Role/Nickname Update
     client.on(
-      'guildMemberUpdate',
+      Events.GuildMemberUpdate,
       async (oldMember: GuildMember | PartialGuildMember, newMember: GuildMember) => {
         const config = getAuditConfig(newMember.guild.id);
         if (!config.enabled) return;
@@ -429,7 +430,7 @@ const feature: Feature = {
     );
 
     // Voice State Update
-    client.on('voiceStateUpdate', async (oldState, newState) => {
+    client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
       const guildId = newState.guild?.id ?? oldState.guild?.id;
       if (!guildId) return;
 

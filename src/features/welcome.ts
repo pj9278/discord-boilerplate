@@ -1,4 +1,4 @@
-import { EmbedBuilder, type Client, type TextChannel, type GuildMember } from 'discord.js';
+import { EmbedBuilder, type Client, type TextChannel, type GuildMember, Events } from 'discord.js';
 import { config } from '../utils/config.js';
 import { logger } from '../utils/logger.js';
 import type { Feature } from '../types/index.js';
@@ -91,7 +91,7 @@ const welcome: Feature = {
 
     // Welcome messages
     if (welcomeChannelId) {
-      client.on('guildMemberAdd', async (member) => {
+      client.on(Events.GuildMemberAdd, async (member) => {
         try {
           // Send welcome message
           const channel = (await client.channels.fetch(welcomeChannelId)) as TextChannel;
@@ -132,7 +132,7 @@ const welcome: Feature = {
 
     // Goodbye messages
     if (goodbyeChannelId) {
-      client.on('guildMemberRemove', async (member) => {
+      client.on(Events.GuildMemberRemove, async (member) => {
         try {
           const channel = (await client.channels.fetch(goodbyeChannelId)) as TextChannel;
 
