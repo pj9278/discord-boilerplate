@@ -10,28 +10,28 @@ const NEWS_SCHEDULE = process.env.CONTENT_NEWS_SCHEDULE ?? '0 9 * * 1'; // Defau
 // Content creator focused RSS feeds
 const RSS_FEEDS = [
   {
-    name: 'Social Media Today',
-    url: 'https://www.socialmediatoday.com/rss.xml',
-  },
-  {
     name: 'Buffer Blog',
     url: 'https://buffer.com/resources/feed/',
-  },
-  {
-    name: 'Later Blog',
-    url: 'https://later.com/blog/feed/',
   },
   {
     name: 'Hootsuite Blog',
     url: 'https://blog.hootsuite.com/feed/',
   },
   {
-    name: 'Content Marketing Institute',
-    url: 'https://contentmarketinginstitute.com/feed/',
-  },
-  {
     name: 'Sprout Social Insights',
     url: 'https://sproutsocial.com/insights/feed/',
+  },
+  {
+    name: 'Social Media Examiner',
+    url: 'https://www.socialmediaexaminer.com/feed/',
+  },
+  {
+    name: 'HubSpot Marketing',
+    url: 'https://blog.hubspot.com/marketing/rss.xml',
+  },
+  {
+    name: 'Neil Patel',
+    url: 'https://neilpatel.com/blog/feed/',
   },
 ];
 
