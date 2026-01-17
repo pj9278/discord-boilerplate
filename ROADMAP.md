@@ -1,6 +1,6 @@
 # Moderation Bot Roadmap
 
-## Status: Phase 1 Complete
+## Status: All Phases Complete
 
 ---
 
@@ -28,35 +28,79 @@
 
 ---
 
-## Phase 2 - Auto-Moderation (TODO)
+## Phase 2 - Auto-Moderation (DONE)
 
-- [ ] Anti-spam (message rate limiting, duplicate detection)
-- [ ] Link/invite filtering (discord.gg, general URLs)
-- [ ] Word filter with guild config
-- [ ] Account age verification on join
+- [x] Anti-spam (message rate limiting, duplicate detection)
+- [x] Link/invite filtering (discord.gg, general URLs)
+- [x] Word filter with guild config
+- [x] Account age verification on join
 
-**Suggested approach:**
-- Create `src/features/automod.ts`
-- Use in-memory Map for rate tracking
-- Store filter config in `data/automod.json`
+**Commands:**
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/automod enable/disable` | Toggle automod | Administrator |
+| `/automod status` | View current config | Administrator |
+| `/automod antispam` | Configure spam detection | Administrator |
+| `/automod linkfilter` | Configure link filtering | Administrator |
+| `/automod wordfilter` | Configure word filter | Administrator |
+| `/automod addword/removeword/listwords` | Manage filter list | Administrator |
+| `/automod accountage` | Set minimum account age | Administrator |
+| `/automod exempt` | Add exempt roles | Administrator |
+
+**Files created:**
+- `src/features/automod.ts` - Main automod feature
+- `src/utils/automodConfig.ts` - Per-guild config storage
+- `src/commands/automod/automod.ts` - Config commands
 
 ---
 
-## Phase 3 - Community Features (TODO)
+## Phase 3 - Community Features (DONE)
 
-- [ ] Ticket/modmail system (private threads)
-- [ ] Verification/reaction roles
-- [ ] Auto-role on join
-- [ ] Welcome/goodbye messages
+- [x] Ticket/modmail system (private threads)
+- [x] Verification/reaction roles
+- [x] Auto-role on join
+- [x] Welcome/goodbye messages
+
+**Commands:**
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/ticket new/close/list/setup` | Ticket system | Manage Messages |
+| `/reactionrole create/add/remove/clear/list` | Reaction roles | Administrator |
+
+**Files created:**
+- `src/features/reactionRoles.ts` - Reaction role handler
+- `src/utils/reactionRoles.ts` - Reaction role storage
+- `src/utils/tickets.ts` - Ticket storage
+- `src/commands/utility/reactionrole.ts` - Reaction role commands
+- `src/commands/utility/ticket.ts` - Ticket commands
 
 ---
 
-## Phase 4 - Advanced (TODO)
+## Phase 4 - Advanced (DONE)
 
-- [ ] Strike escalation (auto-punish at thresholds)
-- [ ] Raid protection mode (mass join detection)
-- [ ] Level/XP system
-- [ ] Full audit logging (message edits/deletes, role changes)
+- [x] Strike escalation (auto-punish at thresholds)
+- [x] Raid protection mode (mass join detection)
+- [x] Level/XP system
+- [x] Full audit logging (message edits/deletes, role changes)
+
+**Commands:**
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/escalation enable/disable/status/set/remove/reset` | Configure strike escalation | Administrator |
+| `/raid enable/disable/status/end/config` | Configure raid protection | Administrator |
+| `/level check/leaderboard` | View levels | Everyone |
+| `/level enable/disable/config/role/removerole/roles` | Configure XP system | Administrator |
+| `/auditlog enable/disable/status/toggle` | Configure audit logging | Administrator |
+
+**Files created:**
+- `src/utils/strikeEscalation.ts` - Escalation config and logic
+- `src/commands/moderation/escalation.ts` - Escalation commands
+- `src/features/raidProtection.ts` - Raid detection
+- `src/commands/moderation/raid.ts` - Raid config commands
+- `src/features/leveling.ts` - XP/level system
+- `src/commands/utility/level.ts` - Level commands
+- `src/features/auditLog.ts` - Audit logging
+- `src/commands/moderation/auditlog.ts` - Audit log config
 
 ---
 
