@@ -35,6 +35,10 @@ src/
 **See `docs/` folder for detailed guides on adding:**
 - Commands, Events, Features, AI, Storage, Scheduled Tasks, Embeds/Buttons
 
+## Auto-Commit Rule
+
+After completing any feature or significant code change, automatically commit and push to GitHub so Railway can deploy.
+
 ## Code Quality - Zero Tolerance
 
 After editing ANY file, run:
