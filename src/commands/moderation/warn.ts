@@ -2,6 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/index.js';
 import { createCase, countUserCases } from '../../utils/moderation.js';
 import { sendModLog } from '../../utils/modLog.js';
+import { checkExactEscalation, formatEscalationDuration } from '../../utils/strikeEscalation.js';
 
 const command: Command = {
   data: new SlashCommandBuilder()
@@ -87,10 +88,90 @@ const command: Command = {
       // Send to mod log channel
       await sendModLog(interaction.client, modCase);
 
+      // Check for escalation
+      const escalation = checkExactEscalation(interaction.guild.id, totalWarnings);
+      let escalationMsg = '';
+
+      if (escalation) {
+        try {
+          switch (escalation.action) {
+            case 'timeout': {
+              await targetMember.timeout(
+                escalation.duration ?? 3600000,
+                `Strike escalation: ${totalWarnings} warnings`
+              );
+
+              const escalationCase = createCase(
+                interaction.guild.id,
+                targetUser.id,
+                targetUser.tag,
+                interaction.client.user!.id,
+                'StrikeEscalation',
+                'timeout',
+                `Automatic escalation: ${totalWarnings} warnings reached`,
+                escalation.duration
+              );
+              await sendModLog(interaction.client, escalationCase);
+
+              escalationMsg = `\n⚠️ **Escalation triggered:** Timed out for ${formatEscalationDuration(escalation.duration ?? 3600000)}`;
+              break;
+            }
+            case 'kick': {
+              await targetUser
+                .send(
+                  `You have been kicked from **${interaction.guild.name}** due to reaching ${totalWarnings} warnings.`
+                )
+                .catch(() => null);
+
+              const escalationCase = createCase(
+                interaction.guild.id,
+                targetUser.id,
+                targetUser.tag,
+                interaction.client.user!.id,
+                'StrikeEscalation',
+                'kick',
+                `Automatic escalation: ${totalWarnings} warnings reached`
+              );
+
+              await targetMember.kick(`Strike escalation: ${totalWarnings} warnings`);
+              await sendModLog(interaction.client, escalationCase);
+
+              escalationMsg = `\n⚠️ **Escalation triggered:** User kicked`;
+              break;
+            }
+            case 'ban': {
+              await targetUser
+                .send(
+                  `You have been banned from **${interaction.guild.name}** due to reaching ${totalWarnings} warnings.`
+                )
+                .catch(() => null);
+
+              const escalationCase = createCase(
+                interaction.guild.id,
+                targetUser.id,
+                targetUser.tag,
+                interaction.client.user!.id,
+                'StrikeEscalation',
+                'ban',
+                `Automatic escalation: ${totalWarnings} warnings reached`
+              );
+
+              await targetMember.ban({ reason: `Strike escalation: ${totalWarnings} warnings` });
+              await sendModLog(interaction.client, escalationCase);
+
+              escalationMsg = `\n⚠️ **Escalation triggered:** User banned`;
+              break;
+            }
+          }
+        } catch {
+          escalationMsg = `\n⚠️ Escalation failed - could not ${escalation.action} user`;
+        }
+      }
+
       await interaction.editReply(
         `**${targetUser.tag}** has been warned. (Case #${modCase.id})\n` +
           `Reason: ${reason}\n` +
-          `Total warnings for this user: ${totalWarnings}`
+          `Total warnings for this user: ${totalWarnings}${escalationMsg}`
       );
     } catch {
       await interaction.editReply('Failed to warn the user.');
