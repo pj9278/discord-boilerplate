@@ -24,11 +24,17 @@ export const config = {
   // Optional - Channel IDs
   channels: {
     welcome: optional('WELCOME_CHANNEL_ID'),
+    goodbye: optional('GOODBYE_CHANNEL_ID'),
     logs: optional('LOGS_CHANNEL_ID'),
     modLog: optional('MOD_LOG_CHANNEL_ID'),
     suggestions: optional('SUGGESTIONS_CHANNEL_ID'),
     bugs: optional('BUGS_CHANNEL_ID'),
     feedback: optional('FEEDBACK_CHANNEL_ID'),
+  },
+
+  // Optional - Role IDs
+  roles: {
+    autoRole: optional('AUTO_ROLE_ID'),
   },
 
   // Bot configuration

@@ -1,9 +1,10 @@
-import { EmbedBuilder, type Client, type TextChannel } from 'discord.js';
+import { EmbedBuilder, type Client, type TextChannel, type GuildMember } from 'discord.js';
 import { config } from '../utils/config.js';
 import { logger } from '../utils/logger.js';
 import type { Feature } from '../types/index.js';
 
 const WELCOME_COLOR = 0x5865f2; // Discord blurple
+const GOODBYE_COLOR = 0xed4245; // Red
 
 function createWelcomeEmbed(
   memberName: string,
@@ -50,44 +51,116 @@ function createWelcomeEmbed(
     .setTimestamp();
 }
 
+function createGoodbyeEmbed(member: GuildMember): EmbedBuilder {
+  const joinedAt = member.joinedAt;
+  const duration = joinedAt ? formatMemberDuration(Date.now() - joinedAt.getTime()) : 'Unknown';
+
+  return new EmbedBuilder()
+    .setColor(GOODBYE_COLOR)
+    .setTitle('Member Left')
+    .setDescription(`**${member.user.username}** has left the server.`)
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+    .addFields(
+      { name: 'Member', value: `<@${member.id}>`, inline: true },
+      { name: 'Time in Server', value: duration, inline: true },
+      { name: 'Member Count', value: `${member.guild.memberCount}`, inline: true }
+    )
+    .setFooter({ text: `User ID: ${member.id}` })
+    .setTimestamp();
+}
+
+function formatMemberDuration(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+}
+
 const welcome: Feature = {
   name: 'welcome',
 
   async init(client: Client): Promise<void> {
-    const channelId = config.channels.welcome;
+    const welcomeChannelId = config.channels.welcome;
+    const goodbyeChannelId = config.channels.goodbye;
+    const autoRoleId = config.roles.autoRole;
 
-    if (!channelId) {
+    // Welcome messages
+    if (welcomeChannelId) {
+      client.on('guildMemberAdd', async (member) => {
+        try {
+          // Send welcome message
+          const channel = (await client.channels.fetch(welcomeChannelId)) as TextChannel;
+
+          if (channel && channel.isTextBased()) {
+            const embed = createWelcomeEmbed(
+              member.user.username,
+              member.user.displayAvatarURL({ size: 256 }),
+              member.guild.memberCount
+            );
+
+            await channel.send({
+              content: `Hey <@${member.id}>! Welcome to the community!`,
+              embeds: [embed],
+            });
+
+            logger.info(`Welcomed new member: ${member.user.tag}`);
+          }
+
+          // Auto-assign role
+          if (autoRoleId) {
+            try {
+              await member.roles.add(autoRoleId);
+              logger.info(`Auto-assigned role to: ${member.user.tag}`);
+            } catch (error) {
+              logger.error(`Failed to auto-assign role to ${member.user.tag}:`, error);
+            }
+          }
+        } catch (error) {
+          logger.error('Failed to send welcome message:', error);
+        }
+      });
+
+      logger.info('Welcome messages enabled');
+    } else {
       logger.warn('Welcome feature: No WELCOME_CHANNEL_ID configured');
-      return;
     }
 
-    client.on('guildMemberAdd', async (member) => {
-      try {
-        const channel = (await client.channels.fetch(channelId)) as TextChannel;
+    // Goodbye messages
+    if (goodbyeChannelId) {
+      client.on('guildMemberRemove', async (member) => {
+        try {
+          const channel = (await client.channels.fetch(goodbyeChannelId)) as TextChannel;
 
-        if (!channel || !channel.isTextBased()) {
-          logger.warn('Welcome channel not found or not a text channel');
-          return;
+          if (!channel || !channel.isTextBased()) {
+            return;
+          }
+
+          // Need to cast since guildMemberRemove gives PartialGuildMember | GuildMember
+          const fullMember = member as GuildMember;
+          const embed = createGoodbyeEmbed(fullMember);
+
+          await channel.send({ embeds: [embed] });
+
+          logger.info(`Sent goodbye for: ${member.user?.tag ?? 'Unknown'}`);
+        } catch (error) {
+          logger.error('Failed to send goodbye message:', error);
         }
+      });
 
-        const embed = createWelcomeEmbed(
-          member.user.username,
-          member.user.displayAvatarURL({ size: 256 }),
-          member.guild.memberCount
-        );
+      logger.info('Goodbye messages enabled');
+    }
 
-        await channel.send({
-          content: `Hey <@${member.id}>! Welcome to the community!`,
-          embeds: [embed],
-        });
+    // Log auto-role status
+    if (autoRoleId) {
+      logger.info(`Auto-role enabled: ${autoRoleId}`);
+    }
 
-        logger.info(`Welcomed new member: ${member.user.tag}`);
-      } catch (error) {
-        logger.error('Failed to send welcome message:', error);
-      }
-    });
-
-    logger.info('Welcome feature initialized');
+    logger.info('Welcome/Goodbye feature initialized');
   },
 };
 
