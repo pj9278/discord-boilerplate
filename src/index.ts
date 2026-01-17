@@ -39,22 +39,56 @@ async function main(): Promise<void> {
       if (message.author.bot) return;
       for (const feature of features) {
         if (feature.onMessage) {
-          await feature.onMessage(message);
+          try {
+            await feature.onMessage(message);
+          } catch (error) {
+            logger.error(`[${feature.name}] Error in onMessage:`, error);
+          }
         }
       }
     });
 
-    // Route reactions to features
+    // Route reaction adds to features
     client.on(Events.MessageReactionAdd, async (reaction, user) => {
       if (user.bot) return;
 
-      const fullReaction = reaction.partial ? await reaction.fetch() : reaction;
-      const fullUser = user.partial ? await user.fetch() : user;
+      try {
+        const fullReaction = reaction.partial ? await reaction.fetch() : reaction;
+        const fullUser = user.partial ? await user.fetch() : user;
 
-      for (const feature of features) {
-        if (feature.onReaction) {
-          await feature.onReaction(fullReaction, fullUser);
+        for (const feature of features) {
+          if (feature.onReaction) {
+            try {
+              await feature.onReaction(fullReaction, fullUser);
+            } catch (error) {
+              logger.error(`[${feature.name}] Error in onReaction:`, error);
+            }
+          }
         }
+      } catch (error) {
+        logger.error('[ReactionHandler] Failed to fetch reaction/user:', error);
+      }
+    });
+
+    // Route reaction removes to features
+    client.on(Events.MessageReactionRemove, async (reaction, user) => {
+      if (user.bot) return;
+
+      try {
+        const fullReaction = reaction.partial ? await reaction.fetch() : reaction;
+        const fullUser = user.partial ? await user.fetch() : user;
+
+        for (const feature of features) {
+          if (feature.onReactionRemove) {
+            try {
+              await feature.onReactionRemove(fullReaction, fullUser);
+            } catch (error) {
+              logger.error(`[${feature.name}] Error in onReactionRemove:`, error);
+            }
+          }
+        }
+      } catch (error) {
+        logger.error('[ReactionHandler] Failed to fetch reaction/user:', error);
       }
     });
 

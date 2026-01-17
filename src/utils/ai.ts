@@ -63,7 +63,10 @@ export async function chatWithHistory(userId: string, message: string): Promise<
 
   const reply = response.choices[0]?.message?.content ?? 'No response';
   history.push({ role: 'assistant', content: reply });
-  conversations.set(userId, history);
+
+  // Cap history at 20 messages to prevent memory leak
+  const cappedHistory = history.slice(-20);
+  conversations.set(userId, cappedHistory);
 
   return reply;
 }

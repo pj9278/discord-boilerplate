@@ -1,53 +1,14 @@
-import type {
-  Client,
-  MessageReaction,
-  PartialMessageReaction,
-  User,
-  PartialUser,
-} from 'discord.js';
+import type { MessageReaction, User } from 'discord.js';
 import type { Feature } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { getRoleForReaction } from '../utils/reactionRoles.js';
 
-const feature: Feature = {
-  name: 'reactionRoles',
-
-  async init(client: Client) {
-    logger.info('[Reaction Roles] Initializing reaction roles system');
-
-    // Handle reaction add
-    client.on('messageReactionAdd', async (reaction, user) => {
-      await handleReaction(reaction, user, 'add');
-    });
-
-    // Handle reaction remove
-    client.on('messageReactionRemove', async (reaction, user) => {
-      await handleReaction(reaction, user, 'remove');
-    });
-
-    logger.info('[Reaction Roles] Reaction roles system ready');
-  },
-};
-
 async function handleReaction(
-  reaction: MessageReaction | PartialMessageReaction,
-  user: User | PartialUser,
+  reaction: MessageReaction,
+  user: User,
   action: 'add' | 'remove'
 ): Promise<void> {
-  // Ignore bots
-  if (user.bot) return;
-
   try {
-    // Fetch partial reaction if needed
-    if (reaction.partial) {
-      try {
-        await reaction.fetch();
-      } catch {
-        logger.error('[Reaction Roles] Failed to fetch partial reaction');
-        return;
-      }
-    }
-
     const message = reaction.message;
     if (!message.guild) return;
 
@@ -93,5 +54,21 @@ async function handleReaction(
     logger.error('[Reaction Roles] Error handling reaction:', error);
   }
 }
+
+const feature: Feature = {
+  name: 'reactionRoles',
+
+  async init() {
+    logger.info('[Reaction Roles] Reaction roles system ready');
+  },
+
+  async onReaction(reaction: MessageReaction, user: User) {
+    await handleReaction(reaction, user, 'add');
+  },
+
+  async onReactionRemove(reaction: MessageReaction, user: User) {
+    await handleReaction(reaction, user, 'remove');
+  },
+};
 
 export default feature;

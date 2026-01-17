@@ -61,32 +61,3 @@ export async function sendModLog(client: Client, modCase: ModCase): Promise<void
     logger.error('Failed to send mod log:', error);
   }
 }
-
-/**
- * Send a simple mod action notification (for actions without full case tracking)
- */
-export async function sendSimpleModLog(
-  client: Client,
-  _guildId: string,
-  action: string,
-  description: string,
-  color = 0x5865f2
-): Promise<void> {
-  const channelId = config.channels.modLog;
-  if (!channelId) return;
-
-  try {
-    const channel = (await client.channels.fetch(channelId)) as TextChannel;
-    if (!channel || !channel.isTextBased()) return;
-
-    const embed = new EmbedBuilder()
-      .setColor(color)
-      .setTitle(action)
-      .setDescription(description)
-      .setTimestamp();
-
-    await channel.send({ embeds: [embed] });
-  } catch (error) {
-    logger.error('Failed to send simple mod log:', error);
-  }
-}

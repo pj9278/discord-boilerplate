@@ -88,14 +88,6 @@ export function getTicketByChannel(channelId: string): Ticket | undefined {
 }
 
 /**
- * Get a ticket by ID
- */
-export function getTicketById(guildId: string, id: number): Ticket | undefined {
-  const data = load();
-  return data.tickets.find((t) => t.guildId === guildId && t.id === id);
-}
-
-/**
  * Close a ticket
  */
 export function closeTicket(channelId: string, closedBy: string): Ticket | undefined {

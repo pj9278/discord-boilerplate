@@ -36,6 +36,7 @@ export interface Feature {
   init: (client: Client) => Promise<void>;
   onMessage?: (message: Message) => Promise<void>;
   onReaction?: (reaction: MessageReaction, user: User) => Promise<void>;
+  onReactionRemove?: (reaction: MessageReaction, user: User) => Promise<void>;
 }
 
 // Moderation types
