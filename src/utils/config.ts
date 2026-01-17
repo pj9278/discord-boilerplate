@@ -26,6 +26,9 @@ export const config = {
     welcome: optional('WELCOME_CHANNEL_ID'),
     logs: optional('LOGS_CHANNEL_ID'),
     modLog: optional('MOD_LOG_CHANNEL_ID'),
+    suggestions: optional('SUGGESTIONS_CHANNEL_ID'),
+    bugs: optional('BUGS_CHANNEL_ID'),
+    feedback: optional('FEEDBACK_CHANNEL_ID'),
   },
 
   // Bot configuration

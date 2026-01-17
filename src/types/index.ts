@@ -58,3 +58,28 @@ export interface ModerationData {
   nextCaseId: Record<string, number>; // Per-guild case ID counter
   cases: ModCase[];
 }
+
+// Feedback types
+export type FeedbackType = 'suggestion' | 'bug' | 'feedback';
+export type FeedbackStatus = 'new' | 'reviewing' | 'in_progress' | 'done' | 'wont_do';
+
+export interface FeedbackItem {
+  id: number;
+  guildId: string;
+  type: FeedbackType;
+  authorId: string;
+  authorTag: string;
+  title: string;
+  description: string;
+  status: FeedbackStatus;
+  messageId: string; // Discord message ID for updating
+  channelId: string;
+  upvotes: number;
+  downvotes: number;
+  timestamp: string;
+}
+
+export interface FeedbackData {
+  nextId: Record<string, number>; // Per-guild ID counter
+  items: FeedbackItem[];
+}
